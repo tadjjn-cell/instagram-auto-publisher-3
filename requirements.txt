@@ -1,0 +1,15 @@
+# Telegram
+telethon>=1.36.0
+
+# Trending signal
+pytrends>=4.9.2
+
+# HTTP (Instagram Graph API + GitHub Releases API calls)
+httpx>=0.27.0
+
+# AI (Groq, OpenAI-compatible, free tier)
+openai>=1.0.0
+
+# Config
+python-dotenv>=1.0.0
+pyyaml>=6.0

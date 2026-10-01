@@ -1,0 +1,36 @@
+# Telegram (secrets like API id/hash/session live in .env or GitHub Secrets)
+telegram:
+  source_chat: "me" # "me" = your own Saved Messages, shared with the other pipelines.
+  require_tag: "ig3:" # Only videos whose caption starts with this tag belong to this Instagram account. Tag is stripped off before use as the topic.
+
+# No shop for this account: it drives traffic to the "Priority or Option?" quiz (justanoption.site, link in bio).
+product:
+  enabled: false
+
+# What this account is about. The AI keeps every caption on-topic for this audience and ends with the CTA.
+niche:
+  description: "relationship feelings for young women: feeling like his option instead of his priority, mixed signals, one-sided effort, being left on delivered, situationships. The account promotes a just-for-fun 'Priority or Option?' quiz linked in the bio"
+  cta: "Priority or option? Take the test, link in bio (for fun)"
+  rules: "Write like a real girl talking to her friends: lowercase is fine, short, relatable, a little raw. The quiz is entertainment only: never claim it reveals the truth, reads his mind, or proves anything about a real person, and never claim scientific accuracy. Never mention spying, hacking, checking his phone, tracking, Snapchat best friends lists, or any tool that shows another person's private information. No fake numbers or testimonials (no 'thousands of girls took it'). No URLs in the caption. Hashtags: relationship and dating tags only, never hack, spy, stalk, free, or a year."
+
+# AI Configuration (Groq, free tier)
+ai:
+  text_model: "openai/gpt-oss-120b"
+
+# Trending signal
+keywords:
+  max_trending: 10 # Google Trends rising/top related queries to feed the AI
+
+# Safety limits
+limits:
+  max_uploads_per_run: 3
+
+# Drip-feed schedule: send all your videos at once in Telegram; this spaces out the
+# actual publishing (new account = gentle pace).
+schedule:
+  post_interval_hours: 6 # Minimum hours between two uploads (about 4 posts/day).
+
+# Paths (relative to project root)
+paths:
+  state_file: "data/state.json"
+  downloads_dir: "downloads"

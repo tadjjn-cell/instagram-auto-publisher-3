@@ -1,0 +1,53 @@
+name: Instagram Auto Publisher
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: instagram-auto-publisher-3
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Queued runs must start from the latest state, not the commit that existed when they were triggered.
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run publisher
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+          TELEGRAM_SESSION: ${{ secrets.TELEGRAM_SESSION }}
+          TELEGRAM_SOURCE_CHAT: ${{ secrets.TELEGRAM_SOURCE_CHAT }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python -m src.main
+
+      - name: Commit updated state
+        run: |
+          git config user.name "instagram-auto-publisher-3-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/state.json
+          git diff --staged --quiet || git commit -m "chore: update processed message state"
+          for i in 1 2 3 4 5; do
+            git pull --rebase -X theirs origin ${{ github.event.repository.default_branch }} && git push && break
+            echo "push failed (attempt $i), retrying..."; sleep $((i * 3))
+          done
