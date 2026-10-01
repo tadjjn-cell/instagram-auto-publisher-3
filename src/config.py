@@ -49,7 +49,10 @@ def _parse_chat_id(value: str):
 
 
 def _require_env(name: str) -> str:
-    value = os.getenv(name, "").strip()
+    value = os.getenv(name, "").strip().strip('"').strip("'")
+    # tolerate a secret pasted together with its 'NAME=' prefix (copied from a .env / script output)
+    if value.upper().startswith(f"{name}="):
+        value = value.split("=", 1)[1].strip()
     if not value:
         raise ValueError(f"Missing required environment variable: {name}")
     return value
