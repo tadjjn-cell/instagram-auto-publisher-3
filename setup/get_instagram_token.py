@@ -68,19 +68,23 @@ if "access_token" not in long_lived:
     raise SystemExit(f"Long-lived token exchange failed: {long_lived}")
 
 issued_at = int(time.time())
+# The 'user_id' in the code-exchange response is not always the id the Graph API publishes to.
+# Ask /me for the professional account's real user_id (and username, to double-check).
+ig_user_id = short.get("user_id", "me")
 try:
     me = httpx.get(
         "https://graph.instagram.com/v25.0/me",
-        params={"fields": "username", "access_token": long_lived["access_token"]},
+        params={"fields": "username,user_id", "access_token": long_lived["access_token"]},
         timeout=30,
     ).json()
+    ig_user_id = me.get("user_id") or ig_user_id
     print(f"\n>>> This token posts to Instagram account: @{me.get('username', '?')} <<<")
     print("    If that is NOT the account you want, do not save it: run this script again.")
 except Exception:
     pass
 print("\n=== COPY THESE — KEEP THEM SECRET ===\n")
 print(f"IG_ACCESS_TOKEN={long_lived['access_token']}|{issued_at}")
-print(f"IG_USER_ID={short.get('user_id', 'me')}")
+print(f"IG_USER_ID={ig_user_id}")
 print("\n=======================================")
 print("Save both as GitHub Secrets. The '|number' suffix is the issue date: the pipeline")
 print("uses it to warn you on Telegram before the 60-day token expires. Re-run this script")
