@@ -13,6 +13,10 @@ from src.github_asset_host import publish_temp_asset, delete_temp_asset
 from src.instagram_uploader import upload_reel, split_token, days_until_expiry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+# httpx logs every request URL at INFO, and the Instagram Graph status calls carry the access
+# token in the query string. The repo (and so its Actions logs) is public: keep those lines out.
+for noisy in ("httpx", "httpcore"):
+    logging.getLogger(noisy).setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
