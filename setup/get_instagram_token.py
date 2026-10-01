@@ -21,13 +21,16 @@ redirect_uri = input("Redirect URI (exactly as registered in the app): ").strip(
 scopes = "instagram_business_basic,instagram_business_content_publish"
 auth_url = (
     "https://www.instagram.com/oauth/authorize"
-    f"?client_id={urllib.parse.quote(app_id)}"
+    # force_reauth: Instagram asks which account to log in with instead of silently
+    # using whatever account is already logged in the browser (the token is tied to it).
+    "?force_reauth=true"
+    f"&client_id={urllib.parse.quote(app_id)}"
     f"&redirect_uri={urllib.parse.quote(redirect_uri, safe='')}"
     f"&scope={scopes}"
     "&response_type=code"
 )
 
-print("\n1) Open this URL in your browser, log in to Instagram and approve:\n")
+print("\n1) Open this URL in your browser, log in with THE INSTAGRAM ACCOUNT THIS PIPELINE POSTS TO, and approve:\n")
 print(auth_url)
 print("\n2) You get redirected to your redirect URI with '?code=...' in the address bar")
 print("   (a 404 page is fine). Copy the FULL address and paste it below.\n")
@@ -65,6 +68,16 @@ if "access_token" not in long_lived:
     raise SystemExit(f"Long-lived token exchange failed: {long_lived}")
 
 issued_at = int(time.time())
+try:
+    me = httpx.get(
+        "https://graph.instagram.com/v25.0/me",
+        params={"fields": "username", "access_token": long_lived["access_token"]},
+        timeout=30,
+    ).json()
+    print(f"\n>>> This token posts to Instagram account: @{me.get('username', '?')} <<<")
+    print("    If that is NOT the account you want, do not save it: run this script again.")
+except Exception:
+    pass
 print("\n=== COPY THESE — KEEP THEM SECRET ===\n")
 print(f"IG_ACCESS_TOKEN={long_lived['access_token']}|{issued_at}")
 print(f"IG_USER_ID={short.get('user_id', 'me')}")
