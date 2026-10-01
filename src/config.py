@@ -1,4 +1,5 @@
 import os
+import re
 import asyncio
 import logging
 from pathlib import Path
@@ -30,7 +31,9 @@ def load_config(config_path: str = "config.yaml") -> dict:
     config["telegram_source_chat"] = _parse_chat_id(source_chat)
 
     config["ig_access_token"] = _require_env("IG_ACCESS_TOKEN")
-    config["ig_user_id"] = _require_env("IG_USER_ID")
+    raw_user_id = _require_env("IG_USER_ID")
+    digits = re.search(r"\d{6,}", raw_user_id)  # keep just the numeric id, whatever got pasted around it
+    config["ig_user_id"] = digits.group(0) if digits else raw_user_id
 
     # Used to host the video at a temporary public URL (GitHub Release asset) so
     # Instagram's Graph API can fetch it -- auto-provided inside GitHub Actions.

@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 
 import httpx
@@ -11,12 +12,17 @@ TOKEN_LIFETIME_DAYS = 60
 
 def split_token(secret: str) -> tuple[str, int | None]:
     """IG_ACCESS_TOKEN is stored as '<token>|<issued_at_unix>' (issue date is optional)."""
-    # tolerate a secret pasted with its 'IG_ACCESS_TOKEN=' prefix, quotes or stray whitespace
-    secret = secret.strip().strip('"').strip("'")
-    if secret.upper().startswith("IG_ACCESS_TOKEN="):
-        secret = secret.split("=", 1)[1].strip()
-    token, _, issued = secret.partition("|")
-    return token.strip(), (int(issued) if issued.strip().isdigit() else None)
+    # Pull the token out of whatever got pasted into the secret: a 'IG_ACCESS_TOKEN=' prefix,
+    # quotes, line breaks, the whole script output, invisible characters...
+    m = re.search(r"(IG[A-Za-z0-9_\-]{40,})(?:\s*\|\s*(\d{9,11}))?", secret or "")
+    if not m:
+        token, _, issued = (secret or "").strip().partition("|")
+        token, issued_at = token.strip(), (int(issued) if issued.strip().isdigit() else None)
+    else:
+        token, issued_at = m.group(1), (int(m.group(2)) if m.group(2) else None)
+    # safe diagnostics: never log the token itself
+    logger.info(f"IG token check: length={len(token)}, starts_with_IG={token.startswith('IG')}, issue_date={'yes' if issued_at else 'no'}")
+    return token, issued_at
 
 
 def days_until_expiry(issued_at: int | None) -> float | None:
