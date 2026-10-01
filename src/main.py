@@ -96,6 +96,8 @@ async def main() -> None:
                 )
 
                 logger.info(f"Published to Instagram: {media_id}")
+                # only a real post starts the drip-feed wait; a failure lets the next run try again
+                state["last_upload_time"] = time.time()
                 await notify(client, source_chat, f"✅ Posted to Instagram:\n{caption[:200]}")
 
             except Exception as e:
@@ -110,7 +112,6 @@ async def main() -> None:
                     await asyncio.to_thread(
                         delete_temp_asset, github_token, github_repo, asset["release_id"], asset["tag"]
                     )
-                state["last_upload_time"] = time.time()
                 if os.path.exists(video["file_path"]):
                     os.remove(video["file_path"])
 

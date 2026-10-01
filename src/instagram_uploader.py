@@ -11,6 +11,10 @@ TOKEN_LIFETIME_DAYS = 60
 
 def split_token(secret: str) -> tuple[str, int | None]:
     """IG_ACCESS_TOKEN is stored as '<token>|<issued_at_unix>' (issue date is optional)."""
+    # tolerate a secret pasted with its 'IG_ACCESS_TOKEN=' prefix, quotes or stray whitespace
+    secret = secret.strip().strip('"').strip("'")
+    if secret.upper().startswith("IG_ACCESS_TOKEN="):
+        secret = secret.split("=", 1)[1].strip()
     token, _, issued = secret.partition("|")
     return token.strip(), (int(issued) if issued.strip().isdigit() else None)
 
